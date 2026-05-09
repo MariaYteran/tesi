@@ -1,0 +1,31 @@
+/* Simple fade/slide animations for content replacement */
+#app { transition: opacity .25s ease, transform .25s ease; }
+.fade-out { opacity: 0; transform: translateX(-8px); }
+.fade-in { opacity: 1; transform: none; }
+
+.submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.submenu.open { max-height: 300px; }
+.arrow { transition: transform 0.3s ease; }
+.arrow.rotated { transform: rotate(90deg); }
+
+/* Custom scrollbar styling for the menu (target elements with overflow-y-auto) */
+.overflow-y-auto {
+	/* Firefox */
+	scrollbar-width: thin;
+	scrollbar-color: #34d399 transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar { width: 10px; }
+.overflow-y-auto::-webkit-scrollbar-track {
+	background: transparent;
+	border-radius: 9999px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+	background: linear-gradient(180deg, #86efac, #10b981);
+	border-radius: 9999px;
+	border: 2px solid rgba(255,255,255,0.06);
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+	filter: brightness(0.95);
+}
+
