@@ -13,7 +13,18 @@ async function loadPage(url, addToHistory = true, title = '', initName = '') {
 		const res = await fetch(fullUrl, { cache: 'no-store' });
 		if (!res.ok) throw new Error(res.statusText);
 		const html = await res.text();
+
+		// push state BEFORE DOM update so page scripts can read the URL
+		if (addToHistory) history.pushState({ url: fullUrl, title, initName }, '', fullUrl);
+
 		app.innerHTML = html;
+
+		app.querySelectorAll('script').forEach(oldScript => {
+			const newScript = document.createElement('script');
+			Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+			newScript.textContent = oldScript.textContent;
+			oldScript.parentNode.replaceChild(newScript, oldScript);
+		});
 
 		// update title if provided
 		if (title) document.title = title;
@@ -29,8 +40,6 @@ async function loadPage(url, addToHistory = true, title = '', initName = '') {
 		app.classList.remove('fade-out');
 		app.classList.add('fade-in');
 		setTimeout(() => app.classList.remove('fade-in'), 300);
-
-		if (addToHistory) history.pushState({ url: fullUrl, title, initName }, '', fullUrl);
 	} catch (err) {
 		console.error('Error cargando página:', err);
 		if (app) app.innerHTML = '<p class="text-red-600">Error cargando contenido.</p>';
@@ -48,14 +57,51 @@ function highlightActiveLink(fullUrl) {
 	}
 }
 
+function mostrarToast(mensaje) {
+	var t = document.createElement('div');
+	t.textContent = mensaje;
+	Object.assign(t.style, {
+		position:'fixed', bottom:'24px', right:'24px',
+		background:'#16a34a', color:'white',
+		padding:'16px 24px', borderRadius:'12px',
+		boxShadow:'0 10px 25px rgba(0,0,0,0.2)',
+		zIndex:'9999', fontWeight:'500', fontSize:'14px',
+		transition:'all 0.3s ease',
+		transform:'translateY(20px)', opacity:'0'
+	});
+	document.body.appendChild(t);
+	requestAnimationFrame(function() {
+		t.style.transform = 'translateY(0)'; t.style.opacity = '1';
+	});
+	setTimeout(function() {
+		t.style.transform = 'translateY(20px)'; t.style.opacity = '0';
+		setTimeout(function() { t.remove(); }, 300);
+	}, 3000);
+}
+
 document.addEventListener('click', (e) => {
 	const a = e.target.closest('a[data-link]');
 	if (!a) return;
+	if (a.dataset.restricted === 'true') {
+		e.preventDefault();
+		mostrarToast('Este módulo no está permitido para tu usuario');
+		return;
+	}
 	e.preventDefault();
 	const href = a.getAttribute('href');
 	const title = a.dataset.title || '';
 	const initName = a.dataset.init || a.dataset.initName || '';
 	if (href) loadPage(href, true, title, initName);
+});
+
+document.addEventListener('click', (e) => {
+	const el = e.target.closest('[data-restricted="true"]');
+	if (el && !el.matches('a[data-link]')) {
+		e.preventDefault();
+		if (el.tagName === 'A') {
+			mostrarToast('Este módulo no está permitido para tu usuario');
+		}
+	}
 });
 
 window.addEventListener('popstate', (evt) => {

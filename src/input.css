@@ -1,1 +1,5 @@
 @import "tailwindcss";
+@source "../dist";
+@source "../app.php";
+@source "../landing.php";
+@source "../roles.php";

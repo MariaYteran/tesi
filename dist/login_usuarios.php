@@ -1,34 +1,45 @@
-﻿<?php
+<?php
 session_start();
 include 'bd.php';
 $error = "";
 
-// Verify clinica table exists (migration check)
 mysqli_query($conexion, "SELECT 1 FROM clinica LIMIT 1");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $RIF_clinica = 'J-' . mysqli_real_escape_string($conexion, $_POST['RIF_clinica']);
+  $prefix = ($_POST['cedula_prefix'] ?? 'V-') === 'E-' ? 'E-' : 'V-';
+  $cedula = $prefix . mysqli_real_escape_string($conexion, $_POST['cedula']);
   $Password = mysqli_real_escape_string($conexion, $_POST['Password']);
 
-  if (empty($RIF_clinica) || empty($Password)) {
+  if (empty($cedula) || empty($Password)) {
     $error = "Por favor, verifique los datos. Todos los campos son obligatorios.";
   } else {
-    $query = mysqli_query($conexion, "SELECT v.*, c.nombre as Nombre_clinic FROM veterinario v JOIN clinica c ON v.RIF_clinica = c.RIF_clinica WHERE v.RIF_clinica='$RIF_clinica' AND v.Password='$Password'");
-    if (mysqli_num_rows($query) > 0) {
-      $usuario = mysqli_fetch_assoc($query);
-      $usuario['rol'] = 'admin';
-      $_SESSION['usuario'] = $usuario;
-      $_SESSION['mostrar_tour'] = true;
+    $tables = [
+      'recepcionista' => 'id_recepcionista',
+      'aux-vet' => 'id_auxiliar',
+      'propietario' => 'id_propietario'
+    ];
+    $found = false;
+    foreach ($tables as $table => $id_field) {
+      $q = mysqli_query($conexion, "SELECT * FROM `$table` WHERE `$id_field`='$cedula' AND `password`='$Password' LIMIT 1");
+      if (mysqli_num_rows($q) > 0) {
+        $usuario = mysqli_fetch_assoc($q);
+        $usuario['rol'] = $table;
+        $_SESSION['usuario'] = $usuario;
+        $_SESSION['mostrar_tour'] = true;
+        $found = true;
+        break;
+      }
+    }
+    if ($found) {
       header("Location: ../index.php");
       exit();
     } else {
-      $error = "Por favor, verifique los datos. RIF o contraseña incorrectos.";
+      $error = "Por favor, verifique los datos. Cédula o contraseña incorrectos.";
     }
   }
 }
 
-$error_rif = $error !== "" && (strpos($error, 'RIF') !== false || strpos($error, 'obligatorios') !== false);
-$error_pass = $error !== "" && (strpos($error, 'contraseña') !== false || strpos($error, 'obligatorios') !== false || strpos($error, 'Password') !== false);
+$error_pass = $error !== "" && (strpos($error, 'contraseña') !== false || strpos($error, 'obligatorios') !== false);
 ?>
 <!doctype html>
 <html lang="es">
@@ -36,7 +47,7 @@ $error_pass = $error !== "" && (strpos($error, 'contraseña') !== false || strpo
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="../css/output.css" rel="stylesheet">
-  <title>inicio de sesion</title>
+  <title>inicio de sesion - usuarios</title>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-green-600 via-emerald-500 to-teal-400 flex items-center justify-center p-4">
   
@@ -57,12 +68,16 @@ $error_pass = $error !== "" && (strpos($error, 'contraseña') !== false || strpo
     <div class="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
       <h1 class="text-3xl font-bold text-green-800 mb-8 text-center">Iniciar Sesión</h1>
       
-      <form class="space-y-5" action="login.php" method="POST">
+      <form class="space-y-5" action="login_usuarios.php" method="POST">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Rif de la clinica</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Cédula</label>
           <div class="flex">
-            <span class="inline-flex items-center px-4 bg-gradient-to-br from-green-600 to-emerald-600 text-white font-bold rounded-l-xl border-2 border-r-0 border-green-200">J-</span>
-            <input type="text" name="RIF_clinica" placeholder="123456789" maxlength="15"
+            <select name="cedula_prefix"
+                    class="inline-flex items-center px-3 bg-gradient-to-br from-green-600 to-emerald-600 text-white font-bold rounded-l-xl border-2 border-r-0 border-green-200 outline-none cursor-pointer">
+              <option value="V-" class="text-gray-800 bg-white">V-</option>
+              <option value="E-" class="text-gray-800 bg-white">E-</option>
+            </select>
+            <input type="text" name="cedula" placeholder="12345678" maxlength="11"
                    oninput="this.value=this.value.replace(/\D/g,'')"
                    class="flex-1 px-4 py-3 border-2 border-green-200 rounded-r-xl outline-none text-gray-700 placeholder-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all" required>
           </div>
@@ -88,10 +103,6 @@ $error_pass = $error !== "" && (strpos($error, 'contraseña') !== false || strpo
         </button>
       </form>
 
-      <p class="mt-6 text-center text-gray-600">
-        ¿No tienes cuenta? 
-        <a href="#" onclick="irRegistro()" class="text-green-600 font-semibold hover:text-green-700">Regístrate</a>
-      </p>
       <p class="mt-3 text-center">
         <a href="#" onclick="irRoles()" class="text-gray-400 hover:text-gray-600 text-sm flex items-center justify-center gap-1 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -135,15 +146,11 @@ $error_pass = $error !== "" && (strpos($error, 'contraseña') !== false || strpo
 <script>
 function irRecuperar() {
   document.body.classList.add('page-exit');
-  setTimeout(function() { window.location.href = 'recuperar.php'; }, 350);
+  setTimeout(function() { window.location.href = 'recuperar.php?tipo=usuario'; }, 350);
 }
 function irRoles() {
   document.body.classList.add('page-exit');
   setTimeout(function() { window.location.href = '../roles.php'; }, 350);
-}
-function irRegistro() {
-  document.body.classList.add('page-exit');
-  setTimeout(function() { window.location.href = 'registro1.php'; }, 350);
 }
 </script>
 </body>
