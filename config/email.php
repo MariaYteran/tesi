@@ -1,9 +1,10 @@
 <?php
 return [
     'host'       => 'smtp.gmail.com',
-    'port'       => 465,
-    'encryption' => 'ssl',
-    'username'   => 'cheetospaws@gmail.com',
-    'password'   => 'mbwi vfrj alsp tpcc', //contrase;a de aplicacion nueva
+    'port'       => 587,
+    'encryption' => 'tls',
+    'username'   => 'cheetospaws.sistemaveterinario@gmail.com',
+    'password'   => 'caqyxvfcqegrardv', //contraseña de aplicación (sin espacios)
     'from_name'  => 'Clinica Veterinaria',
+    'from_email' => 'cheetospaws.sistemaveterinario@gmail.com',
 ];

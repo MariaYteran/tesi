@@ -17,9 +17,16 @@ try {
     $mail->Host = $smtp['host'];
     $mail->SMTPAuth = true;
     $mail->Username = $smtp['username'];
-    $mail->Password = str_replace(' ', '', $smtp['password']);
+    $mail->Password = $smtp['password'];
     $mail->SMTPSecure = $smtp['encryption'];
     $mail->Port = $smtp['port'];
+    $mail->SMTPOptions = [
+        'ssl' => [
+            'verify_peer'       => false,
+            'verify_peer_name'  => false,
+            'allow_self_signed' => true
+        ]
+    ];
     $mail->CharSet = 'UTF-8';
     $mail->setFrom($smtp['username'], $smtp['from_name']);
     $mail->addAddress($smtp['username'], $smtp['from_name']);

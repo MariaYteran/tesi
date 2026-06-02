@@ -1,4 +1,5 @@
 <?php
+ini_set('display_errors', '0');
 include __DIR__ . '/../bd.php';
 header('Content-Type: application/json');
 
@@ -778,15 +779,26 @@ if ($action === 'enviar_consulta') {
         $mail->Host       = $smtp['host'];
         $mail->SMTPAuth   = true;
         $mail->Username   = $smtp['username'];
-        $mail->Password   = str_replace(' ', '', $smtp['password']);
+        $mail->Password   = $smtp['password'];
         $mail->SMTPSecure = $smtp['encryption'];
         $mail->Port       = $smtp['port'];
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+                'allow_self_signed' => true
+            ]
+        ];
         $mail->CharSet    = 'UTF-8';
         $mail->setFrom($smtp['username'], $smtp['from_name']);
         $mail->addAddress($email_to);
         $mail->isHTML(true);
         $mail->Subject = 'Historia Clinica - ' . $r['mascota_nombre'];
         $mail->Body    = '<p>Estimado propietario, adjuntamos la historia clinica de <b>' . htmlspecialchars($r['mascota_nombre']) . '</b>.</p>';
+        $mail->AltBody = 'Adjuntamos la historia clínica.';
+        if (empty($pdf_output)) {
+            throw new Exception('El contenido del PDF está vacío');
+        }
         $mail->addStringAttachment($pdf_output, 'historia_' . $idc . '.pdf', 'base64', 'application/pdf');
         $mail->send();
         ob_end_clean();
@@ -983,11 +995,17 @@ if ($action === 'pdf_consulta') {
                 $mail->Host = $smtp['host'];
                 $mail->SMTPAuth = true;
                 $mail->Username = $smtp['username'];
-                $mail->Password = str_replace(' ', '', $smtp['password']);
+                $mail->Password = $smtp['password'];
                 $mail->SMTPSecure = $smtp['encryption'];
                 $mail->Port = $smtp['port'];
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true
+                    ]
+                ];
                 $mail->CharSet = 'UTF-8';
-                $cli_nombre_completo = ($r['prop_nombre'] ?? '') . ' ' . ($r['prop_apellido'] ?? '');
                 $mail->setFrom($smtp['username'], $smtp['from_name']);
                 $mail->addAddress($prop_email, trim($cli_nombre_completo));
                 $mail->Subject = "Factura de Consulta - $cli_nombre";
@@ -1414,9 +1432,16 @@ if ($action === 'procesar_factura_venta') {
                 $mail->Host = $smtp['host'];
                 $mail->SMTPAuth = true;
                 $mail->Username = $smtp['username'];
-                $mail->Password = str_replace(' ', '', $smtp['password']);
+                $mail->Password = $smtp['password'];
                 $mail->SMTPSecure = $smtp['encryption'];
                 $mail->Port = $smtp['port'];
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true
+                    ]
+                ];
                 $mail->CharSet = 'UTF-8';
                 $mail->setFrom($smtp['username'], $smtp['from_name']);
                 $mail->addAddress($cli_email, $cli_nombre);
@@ -1860,9 +1885,16 @@ if ($action === 'enviar_factura_historial') {
         $mail->Host = $smtp['host'];
         $mail->SMTPAuth = true;
         $mail->Username = $smtp['username'];
-        $mail->Password = str_replace(' ', '', $smtp['password']);
+        $mail->Password = $smtp['password'];
         $mail->SMTPSecure = $smtp['encryption'];
         $mail->Port = $smtp['port'];
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+                'allow_self_signed' => true
+            ]
+        ];
         $mail->CharSet = 'UTF-8';
         $mail->setFrom($smtp['username'], $smtp['from_name']);
         $mail->addAddress($email_to, $cli_nombre);
@@ -2199,9 +2231,16 @@ if ($action === 'enviar_reporte_registro') {
         $mail->Host = $smtp['host'];
         $mail->SMTPAuth = true;
         $mail->Username = $smtp['username'];
-        $mail->Password = str_replace(' ', '', $smtp['password']);
+        $mail->Password = $smtp['password'];
         $mail->SMTPSecure = $smtp['encryption'];
         $mail->Port = $smtp['port'];
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+                'allow_self_signed' => true
+            ]
+        ];
         $mail->CharSet = 'UTF-8';
         $mail->setFrom($smtp['username'], $smtp['from_name']);
         $mail->addAddress($smtp['username'], $smtp['from_name']);
@@ -2258,9 +2297,16 @@ if ($action === 'recuperar_enviar_codigo') {
         $mail->Host = $smtp['host'];
         $mail->SMTPAuth = true;
         $mail->Username = $smtp['username'];
-        $mail->Password = str_replace(' ', '', $smtp['password']);
+        $mail->Password = $smtp['password'];
         $mail->SMTPSecure = $smtp['encryption'];
         $mail->Port = $smtp['port'];
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer'       => false,
+                'verify_peer_name'  => false,
+                'allow_self_signed' => true
+            ]
+        ];
         $mail->CharSet = 'UTF-8';
         $mail->setFrom($smtp['username'], $smtp['from_name']);
         $mail->addAddress($gmail, $nombres);
